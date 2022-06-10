@@ -1,9 +1,9 @@
 import requests
-import sqlite3
 import time
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+# from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.by import By
 from datetime import datetime
 from openpyxl import Workbook
@@ -139,8 +139,12 @@ class Clothes:
                             self.colors = [color]
 
                 else:
-                    s = Service('C://Users/kotek/Desktop/chromedriver.exe')
-                    driver = webdriver.Chrome(service=s)
+                    # s = Service('/usr/bin/chromedriver')
+                    # driver = webdriver.Chrome(service=s)
+                    driver = webdriver.Remote('http://selenium:4444/wd/hub',
+                                              desired_capabilities=DesiredCapabilities.CHROME)
+
+                    # driver = webdriver.Chrome()
                     driver.get(path)
                     time.sleep(3)
                     el = driver.find_element(By.XPATH,

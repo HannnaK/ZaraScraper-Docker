@@ -1,13 +1,16 @@
 import sqlite3
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+# from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import time
 from bs4 import BeautifulSoup
-from zara import man_categories
+from zara_main import man_categories
 
-s = Service('C://Users/kotek/Desktop/chromedriver.exe')
-driver = webdriver.Chrome(service=s)
+# s = Service('/usr/bin/chromedriver')
+# driver = webdriver.Chrome(service=s)
+driver = webdriver.Remote('http://selenium:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
 
+# driver = webdriver.Chrome()
 categories_dict = {}
 for category in man_categories:
     path = category[1]

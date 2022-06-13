@@ -1,14 +1,14 @@
 import requests
 import time
+# import sqlite3
 from bs4 import BeautifulSoup
-from selenium import webdriver
-# from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+# from selenium import webdriver
+# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.by import By
 from datetime import datetime
 from openpyxl import Workbook
 from fake_useragent import UserAgent
-from categories_man import categories_dict
+from categories_man import categories_dict, driver
 
 # conn = sqlite3.connect('database.db')
 # c = conn.cursor()
@@ -26,6 +26,7 @@ from categories_man import categories_dict
 #         for k, v in links_all:
 #             if k == key:
 #                 categories_dict[key].append(v)
+# conn.close()
 
 data = datetime.now().strftime("%Y-%m-%d")
 print(datetime.now())
@@ -47,6 +48,8 @@ def find_color(tag, class_, clothesBS):
         color_list.append(color)
     return color_list
 
+
+# driver = webdriver.Remote('http://selenium:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
 
 class Clothes:
     def __init__(self, path, category, clothesBS):
@@ -139,14 +142,9 @@ class Clothes:
                             self.colors = [color]
 
                 else:
-                    # s = Service('/usr/bin/chromedriver')
-                    # driver = webdriver.Chrome(service=s)
-                    driver = webdriver.Remote('http://selenium:4444/wd/hub',
-                                              desired_capabilities=DesiredCapabilities.CHROME)
-
-                    # driver = webdriver.Chrome()
                     driver.get(path)
-                    time.sleep(3)
+
+                    time.sleep(15)
                     el = driver.find_element(By.XPATH,
                                              "//span[@class='product-detail-color-selector__color-marker']/span[@class='product-detail-color-selector__color-area']/span[@class='screen-reader-text']")
                     driver.execute_script("arguments[0].click();", el)
@@ -162,7 +160,6 @@ class Clothes:
 
                     except AttributeError:
                         pass
-                    driver.close()
 
                     span = clothesBS_colour.find("div", "product-detail-info__price-amount price")
                     price_with_currency = span.find("span", "price-current__amount").text
@@ -182,6 +179,7 @@ class Clothes:
 
 list_with_all_data = []
 for category, clothes_list in categories_dict.items():
+
     for path in clothes_list:
         try:
             ua = UserAgent()
@@ -193,7 +191,7 @@ for category, clothes_list in categories_dict.items():
             list_with_all_data.append(Clothes(path, category, clothesBS))
 
         except AttributeError:
-            print('this link no longer exists: ', path)
+            print('link does not exist or is an ad: ', path)
 
 print('ilość linków:', len(list_with_all_data))
 

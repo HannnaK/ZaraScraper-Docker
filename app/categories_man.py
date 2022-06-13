@@ -10,7 +10,6 @@ from zara_main import man_categories
 # driver = webdriver.Chrome(service=s)
 driver = webdriver.Remote('http://selenium:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
 
-# driver = webdriver.Chrome()
 categories_dict = {}
 for category in man_categories:
     path = category[1]
@@ -21,7 +20,7 @@ for category in man_categories:
 
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(5)
+        time.sleep(15)
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
             break
@@ -37,8 +36,6 @@ for category in man_categories:
     links_href = set(links_href)
     links_href = list(links_href)
     categories_dict[category[0]] = links_href
-
-driver.close()
 
 conn = sqlite3.connect('database.db')
 c = conn.cursor()
@@ -61,5 +58,4 @@ for key, value in categories_dict.items():
         c.execute(add_data, parameters)
 
 conn.commit()
-
 conn.close()

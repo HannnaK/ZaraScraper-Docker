@@ -1,14 +1,12 @@
-import sqlite3
-from selenium import webdriver
-# from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import time
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from bs4 import BeautifulSoup
 from zara_main import man_categories
 
-# s = Service('/usr/bin/chromedriver')
-# driver = webdriver.Chrome(service=s)
-driver = webdriver.Remote('http://selenium:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
+driver = webdriver.Remote(
+    "http://selenium:4444/wd/hub", desired_capabilities=DesiredCapabilities.CHROME
+)
 
 categories_dict = {}
 for category in man_categories:
@@ -28,34 +26,13 @@ for category in man_categories:
 
     zara = driver.page_source
     clothing = BeautifulSoup(zara, features="lxml")
-    links = clothing.find_all('a', class_="product-link product-grid-product__link link")
+    links = clothing.find_all(
+        "a", class_="product-link product-grid-product__link link"
+    )
     links_href = []
     for link in links:
-        href = link.get('href')
+        href = link.get("href")
         links_href.append(href)
     links_href = set(links_href)
     links_href = list(links_href)
     categories_dict[category[0]] = links_href
-
-conn = sqlite3.connect('database.db')
-c = conn.cursor()
-
-create_table = """
-DROP TABLE IF EXISTS "categories";
-CREATE TABLE "categories"
-(
-    "category" TEXT    NOT NULL,
-    "clothes" TEXT    NOT NULL
-);"""
-c.executescript(create_table)
-
-for key, value in categories_dict.items():
-    category = key
-    for cl in value:
-        clothes = cl
-        add_data = 'INSERT INTO "categories" ("category", "clothes") VALUES (?, ?)'
-        parameters = (category, clothes)
-        c.execute(add_data, parameters)
-
-conn.commit()
-conn.close()

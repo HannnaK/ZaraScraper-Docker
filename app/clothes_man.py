@@ -1,32 +1,11 @@
 import requests
 import time
-# import sqlite3
 from bs4 import BeautifulSoup
-# from selenium import webdriver
-# from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.by import By
 from datetime import datetime
 from openpyxl import Workbook
 from fake_useragent import UserAgent
-from categories_man import categories_dict, driver
-
-# conn = sqlite3.connect('database.db')
-# c = conn.cursor()
-#
-# data_download = """
-# SELECT * FROM "categories";
-# """
-#
-# links = c.execute(data_download)
-# links_all = links.fetchall()
-# categories_dict = {}
-#
-# for key, value in links_all:
-#         categories_dict[key] = []
-#         for k, v in links_all:
-#             if k == key:
-#                 categories_dict[key].append(v)
-# conn.close()
+from categories_man import driver, categories_dict
 
 data = datetime.now().strftime("%Y-%m-%d")
 print(datetime.now())
@@ -39,17 +18,77 @@ def find_index(tag, class_, clothesBS):
     return index
 
 
-def find_color(tag, class_, clothesBS):
-    color_div = clothesBS.find(tag, class_)
-    color_span = color_div.find_all("span", "screen-reader-text")
-    color_list = []
-    for span in color_span:
-        color = span.text
-        color_list.append(color)
-    return color_list
+def find_price(clothesBS):
+    span = clothesBS.find("div", "product-detail-info__price-amount price")
+    price_with_currency = span.find("span", "price-current__amount").text
+    price_text = price_with_currency.split(' ')[0]
+    if len(price_text) > 6:
+        price_text = price_text.replace('\xa0', '')
+    price = float(price_text.replace(',', '.'))
+    return price
 
 
-# driver = webdriver.Remote('http://selenium:4444/wd/hub', desired_capabilities=DesiredCapabilities.CHROME)
+def find_color(clothesBS):
+    if clothesBS.find("div",
+                      "product-detail-color-selector product-detail-info__color-selector") != None:
+        color_div = clothesBS.find("div",
+                                   "product-detail-color-selector product-detail-info__color-selector", clothesBS)
+        color_span = color_div.find_all("span", "screen-reader-text")
+        color_list = []
+        for span in color_span:
+            color = span.text
+            color_list.append(color)
+        return color_list
+    else:
+        color_text = clothesBS.find("p",
+                                    "product-detail-selected-color product-detail-info__color").text
+        color_list = color_text.split(' ')
+        color = color_list[0]
+        try:
+            color_int = int(color[0])
+            color = []
+        except ValueError:
+            color = [color]
+        return color
+
+
+def find_prices_colors(category, clothesBS, path):
+    for span in clothesBS.find_all("div", "product-detail-info__price-amount price"):
+        old_price_span = span.find("span", "price-old__amount price__amount price__amount-old")
+        if old_price_span != None:
+            old_price_with_currency = old_price_span.text
+            old_price_text = old_price_with_currency.split(' ')[0]
+            old_price = float(old_price_text.replace(',', '.'))
+            price = find_price(clothesBS)
+            colors = find_color(clothesBS)
+            return [old_price, price, colors]
+
+        elif old_price_span == None and category != 'promocje':
+            old_price = None
+            colors = find_color(clothesBS)
+            price = find_price(clothesBS)
+            return [old_price, price, colors]
+        else:
+            driver.get(path)
+
+            time.sleep(6)
+            el = driver.find_element(By.XPATH,
+                                     "//span[@class='product-detail-color-selector__color-marker']/span[@class='product-detail-color-selector__color-area']/span[@class='screen-reader-text']")
+            driver.execute_script("arguments[0].click();", el)
+            different_colour = driver.page_source
+            clothesBS_colour = BeautifulSoup(different_colour, features="lxml")
+
+            for span in clothesBS_colour.find_all("div", "product-detail-info__price-amount price"):
+                old_price_with_currency = span.find("span",
+                                                    "price-old__amount price__amount price__amount-old").text
+                old_price_text = old_price_with_currency.split(' ')[0]
+                old_price = float(old_price_text.replace(',', '.'))
+                price = find_price(clothesBS_colour)
+                colors = clothesBS_colour.find("span",
+                                               "product-detail-color-selector__color-marker product-detail-color-selector__color-marker--is-selected")
+                color = [colors.find("span", "screen-reader-text").text]
+                return [old_price, price, color]
+
 
 class Clothes:
     def __init__(self, path, category, clothesBS):
@@ -73,105 +112,12 @@ class Clothes:
         for span in clothesBS.find_all("span", "product-detail-size-info__main-label"):
             size = span.text
             self.sizes.append(size)
-        if category != 'promocje':
 
-            span = clothesBS.find("div", "product-detail-info__price-amount price")
-            price_with_currency = span.find("span", "price-current__amount").text
-            price_text = price_with_currency.split(' ')[0]
-            if len(price_text) > 6:
-                price_text = price_text.replace('\xa0', '')
-            self.price = float(price_text.replace(',', '.'))
+        prices_colors = find_prices_colors(category, clothesBS, path)
 
-            for span in clothesBS.find_all("div", "product-detail-info__price-amount price"):
-                old_price_span = span.find("span", "price-old__amount price__amount price__amount-old")
-                if old_price_span != None:
-                    old_price_with_currency = old_price_span.text
-                    old_price_text = old_price_with_currency.split(' ')[0]
-                    self.old_price = float(old_price_text.replace(',', '.'))
-                else:
-                    self.old_price = None
-
-            if clothesBS.find("div",
-                              "product-detail-color-selector product-detail-info__color-selector") != None:
-                self.colors = find_color("div",
-                                         "product-detail-color-selector product-detail-info__color-selector", clothesBS)
-
-            else:
-                color_text = clothesBS.find("p",
-                                            "product-detail-selected-color product-detail-info__color").text
-                color_list = color_text.split(' ')
-                color = color_list[0]
-                try:
-                    color_int = int(color[0])
-                    self.colors = []
-                except ValueError:
-                    self.colors = [color]
-
-        else:
-
-            for span in clothesBS.find_all("div", "product-detail-info__price-amount price"):
-                old_price_span = span.find("span", "price-old__amount price__amount price__amount-old")
-
-                if old_price_span != None:
-
-                    old_price_with_currency = old_price_span.text
-                    old_price_text = old_price_with_currency.split(' ')[0]
-                    self.old_price = float(old_price_text.replace(',', '.'))
-
-                    span = clothesBS.find("div", "product-detail-info__price-amount price")
-                    price_with_currency = span.find("span", "price-current__amount").text
-                    price_text = price_with_currency.split(' ')[0]
-                    if len(price_text) > 6:
-                        price_text = price_text.replace('\xa0', '')
-                    self.price = float(price_text.replace(',', '.'))
-
-                    if clothesBS.find("div",
-                                      "product-detail-color-selector product-detail-info__color-selector") != None:
-                        self.colors = find_color("div",
-                                                 "product-detail-color-selector product-detail-info__color-selector",
-                                                 clothesBS)
-                    else:
-                        color_text = clothesBS.find("p",
-                                                    "product-detail-selected-color product-detail-info__color").text
-                        color_list = color_text.split(' ')
-                        color = color_list[0]
-                        try:
-                            color_int = int(color[0])
-                            self.colors = []
-                        except ValueError:
-                            self.colors = [color]
-
-                else:
-                    driver.get(path)
-
-                    time.sleep(15)
-                    el = driver.find_element(By.XPATH,
-                                             "//span[@class='product-detail-color-selector__color-marker']/span[@class='product-detail-color-selector__color-area']/span[@class='screen-reader-text']")
-                    driver.execute_script("arguments[0].click();", el)
-                    different_colour = driver.page_source
-                    clothesBS_colour = BeautifulSoup(different_colour, features="lxml")
-
-                    try:
-                        for span in clothesBS_colour.find_all("div", "product-detail-info__price-amount price"):
-                            old_price_with_currency = span.find("span",
-                                                                "price-old__amount price__amount price__amount-old").text
-                            old_price_text = old_price_with_currency.split(' ')[0]
-                            self.old_price = float(old_price_text.replace(',', '.'))
-
-                    except AttributeError:
-                        pass
-
-                    span = clothesBS_colour.find("div", "product-detail-info__price-amount price")
-                    price_with_currency = span.find("span", "price-current__amount").text
-                    price_text = price_with_currency.split(' ')[0]
-                    if len(price_text) > 6:
-                        price_text = price_text.replace('\xa0', '')
-                    self.price = float(price_text.replace(',', '.'))
-
-                    color = clothesBS_colour.find("span",
-                                                  "product-detail-color-selector__color-marker product-detail-color-selector__color-marker--is-selected")
-
-                    self.colors = [color.find("span", "screen-reader-text").text]
+        self.old_price = prices_colors[0]
+        self.price = prices_colors[1]
+        self.colors = prices_colors[2]
 
     def __repr__(self):
         return f'index {self.index}, link {self.link}, name {self.name}, price {self.price}, old_price {self.old_price}, description: {self.description}, colors {self.colors}, sizes {self.sizes}'
@@ -190,7 +136,7 @@ for category, clothes_list in categories_dict.items():
 
             list_with_all_data.append(Clothes(path, category, clothesBS))
 
-        except AttributeError:
+        except (AttributeError, TypeError):
             print('link does not exist or is an ad: ', path)
 
 print('ilość linków:', len(list_with_all_data))

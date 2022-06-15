@@ -167,7 +167,7 @@ for category, clothes_list in categories_dict.items():
         except (AttributeError, TypeError):
             print("link does not exist or is an ad: ", path)
 
-print("ilość linków:", len(list_with_all_data))
+print("quantity of links:", len(list_with_all_data))
 
 file_name = "men" + data + ".xlsx"
 wb = Workbook()

@@ -15,7 +15,8 @@ def find_price(clothesBS):
     span = clothesBS.find("div", "product-detail-info__price-amount price")
     price_with_currency = span.find("span", "price-current__amount").text
     price_text = price_with_currency.split(" ")[0]
-    if len(price_text) > 6:
+    num_char_price_text = 6
+    if len(price_text) > num_char_price_text:
         price_text = price_text.replace("\xa0", "")
     price = float(price_text.replace(",", "."))
     return price
@@ -73,8 +74,8 @@ def find_prices_colors(category, clothesBS, path):
             return [old_price, price, colors]
         else:
             driver.get(path)
-
-            time.sleep(6)
+            waiting_time = 6
+            time.sleep(waiting_time)
             el = driver.find_element(
                 By.XPATH,
                 "//span[@class='product-detail-color-selector__color-marker']/span[@class='product-detail-color-selector__color-area']/span[@class='screen-reader-text']",

@@ -7,6 +7,10 @@ Run the app:
 
     you need to have docker and docker-compose installed to run the application
     use commands:
+        $ docker-compose build
+        $ docker-compose up
+
+    or if you are using Compose V2:
         $ docker compose build
         $ docker compose up
 

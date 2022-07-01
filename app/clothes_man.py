@@ -1,24 +1,46 @@
 import requests
+import sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
 from openpyxl import Workbook
 from fake_useragent import UserAgent
-from categories_man import categories_dict
-from functions_man import find_index, find_prices_colors
+from functions_man import find_index, find_old_price, find_price, find_color
+
+conn = sqlite3.connect('database.db')
+c = conn.cursor()
+
+data_download = """
+SELECT * FROM "clothes";
+"""
+
+links = c.execute(data_download)
+man_clothes = links.fetchall()
+
+only_categories = []
+for category in man_clothes:
+    only_categories.append(category[0])
+only_categories = list(set(only_categories))
+
+clothes_dict = {}
+for category in only_categories:
+    clothes_dict[category] = []
+
+for link in man_clothes:
+    clothes_dict[link[0]].append((link[1], link[2]))
 
 data = datetime.now().strftime("%Y-%m-%d")
 print(datetime.now())
 
 
 class Clothes:
-    def __init__(self, path, category, clothesBS):
+    def __init__(self, path, is_on_sale, category, clothesBS):
         self.category = category
         if (
-            clothesBS.find(
-                "p",
-                "product-detail-selected-color product-detail-color-selector__selected-color-name",
-            )
-            != None
+                clothesBS.find(
+                    "p",
+                    "product-detail-selected-color product-detail-color-selector__selected-color-name",
+                )
+                != None
         ):
             index = find_index(
                 "p",
@@ -35,6 +57,8 @@ class Clothes:
 
         self.link = path
 
+        self.is_on_sale = "nie" if is_on_sale == 0 else "tak"
+
         self.name = clothesBS.find("meta", property="og:title")["content"]
 
         self.description = clothesBS.find("meta", property="og:description")["content"]
@@ -44,107 +68,58 @@ class Clothes:
             size = span.text
             self.sizes.append(size)
 
-        prices_colors = find_prices_colors(category, clothesBS, path)
-
-        self.old_price = prices_colors[0]
-        self.price = prices_colors[1]
-        self.colors = prices_colors[2]
+        self.old_price = find_old_price(clothesBS, is_on_sale)
+        self.price = find_price(clothesBS)
+        self.colors = find_color(clothesBS)
 
 
 list_with_all_data = []
-for category, clothes_list in categories_dict.items():
-
+for category, clothes_list in clothes_dict.items():
     for path in clothes_list:
         try:
             ua = UserAgent()
-            headers = {"User-Agent": str(ua.chrome)}
-            clothes_requests = requests.get(path, headers=headers)
+            headers = {'User-Agent': str(ua.chrome)}
+            clothes_requests = requests.get(path[0], headers=headers)
 
             clothesBS = BeautifulSoup(clothes_requests.content, features="lxml")
 
-            list_with_all_data.append(Clothes(path, category, clothesBS))
+            list_with_all_data.append(Clothes(path[0], path[1], category, clothesBS))
 
         except (AttributeError, TypeError):
-            print("link does not exist or is an ad: ", path)
+            print('this link no longer exists or it is an ad: ', path[0])
 
-print("quantity of links:", len(list_with_all_data))
+print('ilość linków:', len(list_with_all_data))
 
-file_name = "men" + data + ".xlsx"
+file_name = 'men' + data + '.xlsx'
 wb = Workbook()
 
-for key, value in categories_dict.items():
+for key, value in clothes_dict.items():
     wb.create_sheet(key)
     wb[key].append(
-        [
-            "index",
-            "link",
-            "nazwa",
-            "aktualna cena",
-            "poprzednia cena",
-            "opis",
-            "kolor",
-            "rozmiar",
-        ]
-    )
+        ['index', 'link', 'wyprzedaz', 'nazwa', 'aktualna cena', 'poprzednia cena', 'opis', 'kolor', 'rozmiar'])
     for clothes in list_with_all_data:
         if clothes.category == key:
             if len(clothes.colors) == 0:
                 if len(clothes.sizes) == 0:
-                    wb[key].append(
-                        [
-                            clothes.index,
-                            clothes.link,
-                            clothes.name,
-                            clothes.price,
-                            clothes.old_price,
-                            clothes.description,
-                            None,
-                            None,
-                        ]
-                    )
+                    wb[key].append([clothes.index, clothes.link, clothes.is_on_sale, clothes.name, clothes.price,
+                                    clothes.old_price,
+                                    clothes.description, None, None])
                 else:
                     for size in clothes.sizes:
-                        wb[key].append(
-                            [
-                                clothes.index,
-                                clothes.link,
-                                clothes.name,
-                                clothes.price,
-                                clothes.old_price,
-                                clothes.description,
-                                None,
-                                size,
-                            ]
-                        )
+                        wb[key].append([clothes.index, clothes.link, clothes.is_on_sale, clothes.name, clothes.price,
+                                        clothes.old_price,
+                                        clothes.description, None, size])
             else:
                 for color in clothes.colors:
                     if len(clothes.sizes) == 0:
-                        wb[key].append(
-                            [
-                                clothes.index,
-                                clothes.link,
-                                clothes.name,
-                                clothes.price,
-                                clothes.old_price,
-                                clothes.description,
-                                color,
-                                None,
-                            ]
-                        )
+                        wb[key].append([clothes.index, clothes.link, clothes.is_on_sale, clothes.name, clothes.price,
+                                        clothes.old_price,
+                                        clothes.description, color, None])
                     for size in clothes.sizes:
-                        wb[key].append(
-                            [
-                                clothes.index,
-                                clothes.link,
-                                clothes.name,
-                                clothes.price,
-                                clothes.old_price,
-                                clothes.description,
-                                color,
-                                size,
-                            ]
-                        )
+                        wb[key].append([clothes.index, clothes.link, clothes.is_on_sale, clothes.name, clothes.price,
+                                        clothes.old_price,
+                                        clothes.description, color, size])
 
-wb.remove(wb["Sheet"])
+wb.remove(wb['Sheet'])
 wb.save(file_name)
 print(datetime.now())

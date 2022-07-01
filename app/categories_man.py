@@ -1,38 +1,109 @@
+import sqlite3
 import time
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from bs4 import BeautifulSoup
-from zara_main import man_categories
 
 driver = webdriver.Remote(
     "http://selenium:4444/wd/hub", desired_capabilities=DesiredCapabilities.CHROME
 )
 
+conn = sqlite3.connect('database.db')
+c = conn.cursor()
+
+data_download = """
+SELECT * FROM "categories";
+"""
+
+links = c.execute(data_download)
+man_categories = links.fetchall()
+
+
+def all_hrefs(column_number):
+    all_href = []
+    all_li_0th_column = clothing.find_all('li', column_number)
+    for li in all_li_0th_column:
+        data_productid = li['data-productid']
+        li_a = li.find('a')
+        href = li_a.get('href')
+        whole_href = href + '?v1=' + data_productid + '&v2=' + path[-7:]
+        all_href.append(whole_href)
+    return all_href
+
+
+only_categories = []
+for category in man_categories:
+    only_categories.append(category[0])
+only_categories = list(set(only_categories))
+
 categories_dict = {}
+for category in only_categories:
+    categories_dict[category] = []
+
 for category in man_categories:
     path = category[1]
-    print(category[0])
+    is_on_sale = category[2]
+    print(category[0], category[2])
     driver.get(path)
 
     last_height = driver.execute_script("return document.body.scrollHeight")
 
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(15)
+        time.sleep(10)
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
             break
         last_height = new_height
 
     zara = driver.page_source
+
     clothing = BeautifulSoup(zara, features="lxml")
-    links = clothing.find_all(
-        "a", class_="product-link product-grid-product__link link"
-    )
-    links_href = []
-    for link in links:
-        href = link.get("href")
-        links_href.append(href)
-    links_href = set(links_href)
-    links_href = list(links_href)
-    categories_dict[category[0]] = links_href
+
+    if is_on_sale == 1:
+        hrefs = []
+        for href in all_hrefs(
+                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--0th-column"):
+            hrefs.append(href)
+        for href in all_hrefs(
+                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--1th-column"):
+            hrefs.append(href)
+        for href in all_hrefs(
+                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--2th-column"):
+            hrefs.append(href)
+        for href in all_hrefs(
+                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--3th-column"):
+            hrefs.append(href)
+
+        for href in hrefs:
+            categories_dict[category[0]].append((href, is_on_sale))
+    else:
+        links = clothing.find_all(
+            "a", class_="product-link product-grid-product__link link"
+        )
+        hrefs = []
+        for link in links:
+            href = link.get("href")
+            hrefs.append(href)
+
+        hrefs = set(hrefs)
+        hrefs = list(hrefs)
+
+        for href in hrefs:
+            categories_dict[category[0]].append((href, is_on_sale))
+
+conn = sqlite3.connect('database.db')
+c = conn.cursor()
+
+for key, value in categories_dict.items():
+    category = key
+    for cl in value:
+        clothes = cl[0]
+        is_on_sale = cl[1]
+        add_data = 'INSERT INTO "clothes" ("category", "clothes", "is_on_sale") VALUES (?, ?, ?)'
+        parameters = (category, clothes, is_on_sale)
+        c.execute(add_data, parameters)
+
+conn.commit()
+
+conn.close()

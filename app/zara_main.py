@@ -1,4 +1,9 @@
-import os
-os.system("app/base_init.py")
-os.system("app/categories_man.py")
-os.system("app/clothes_man.py")
+from base_init import run_script_sql
+from categories_man import categories_man_fun
+from clothes_man import clothes_man_fun
+
+
+if __name__ == "__main__":
+    run_script_sql(["categories.sql", "clothes.sql", "clothes_details.sql"])
+    categories_man_fun()
+    clothes_man_fun()

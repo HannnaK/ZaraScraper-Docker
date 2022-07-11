@@ -29,6 +29,7 @@ VALUES ('od -60%', 'https://www.zara.com/pl/pl/man-from-60-l5429.html?v1=2111003
 
 ('nowosci', 'https://www.zara.com/pl/pl/mezczyzna-nowosci-l711.html', 0),
 ('zara athleticz', 'https://www.zara.com/pl/pl/zara-athleticz-collection-l4712.html?v1=2112945', 0),
+('kolekcja basic', 'https://www.zara.com/pl/pl/mezczyzna-basics-l587.html?v1=2112966', 0),
 ('garnitury', 'https://www.zara.com/pl/pl/mezczyzna-garnitury-l808.html?v1=2113078', 0),
 ('koszule', 'https://www.zara.com/pl/pl/mezczyzna-koszule-l737.html?v1=2113199', 0),
 ('t-shirty', 'https://www.zara.com/pl/pl/mezczyzna-t-shirty-l855.html?v1=2113240', 0),

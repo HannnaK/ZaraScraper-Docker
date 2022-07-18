@@ -4,7 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from bs4 import BeautifulSoup
 from datetime import datetime
-from functions_man import all_hrefs
+from functions_man import all_hrefs, database_connection, conn
 
 print(datetime.now())
 
@@ -14,13 +14,11 @@ def categories_man_fun():
         "http://selenium:4444/wd/hub", desired_capabilities=DesiredCapabilities.CHROME
     )
 
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-
     data_download = """
     SELECT * FROM "categories";
     """
-    links = c.execute(data_download)
+    links = database_connection(data_download, ())
+
     man_categories = links.fetchall()
 
     only_categories = []
@@ -82,6 +80,6 @@ def categories_man_fun():
             is_on_sale = cl[1]
             add_data = 'INSERT INTO "clothes" ("category", "clothes", "is_on_sale") VALUES (?, ?, ?)'
             parameters = (category, clothes, is_on_sale)
-            c.execute(add_data, parameters)
+            database_connection(add_data, parameters)
 
     conn.commit()

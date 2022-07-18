@@ -1,10 +1,16 @@
 import requests
-import sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime
 from openpyxl import Workbook
 from fake_useragent import UserAgent
-from functions_man import find_index, find_old_price, find_price, find_color
+from functions_man import (
+    find_index,
+    find_old_price,
+    find_price,
+    find_color,
+    database_connection,
+    conn,
+)
 
 
 class Clothes:
@@ -50,14 +56,12 @@ class Clothes:
 
 
 def clothes_man_fun():
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
 
     data_download = """
        SELECT * FROM "clothes";
        """
 
-    links = c.execute(data_download)
+    links = database_connection(data_download, ())
     man_clothes = links.fetchall()
 
     only_categories = []
@@ -166,7 +170,6 @@ def clothes_man_fun():
                                 ]
                             )
 
-    c1 = conn.cursor()
     for cloth in clothes_list:
         add_data = 'INSERT INTO "clothes_details" ("id", "category", "index", "link", "is_on_sale", "name", "price", "old_price", "description", "colors", "sizes") VALUES (Null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         parameters = (
@@ -181,23 +184,21 @@ def clothes_man_fun():
             cloth[8],
             cloth[9],
         )
-        c1.execute(add_data, parameters)
+        database_connection(add_data, parameters)
 
     conn.commit()
 
-    c2 = conn.cursor()
     delete_duplicates = """
            DELETE FROM clothes_details
            WHERE rowid not in (SELECT  min(rowid) FROM clothes_details GROUP BY "category", "index", "colors", "sizes")
        """
-    c2.execute(delete_duplicates)
+    database_connection(delete_duplicates, ())
 
-    c3 = conn.cursor()
     without_duplicates = """
                SELECT * FROM "clothes_details";
                """
 
-    exel_data = c3.execute(without_duplicates)
+    exel_data = database_connection(without_duplicates, ())
     data_to_exel = exel_data.fetchall()
 
     conn.close()

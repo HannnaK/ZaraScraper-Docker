@@ -7,7 +7,7 @@ CREATE TABLE "categories"
     "is_on_sale" BOOLEAN NOT NULL CHECK ("is_on_sale" IN (0, 1))
 );
 INSERT INTO "categories"
-VALUES ('od -60%', 'https://www.zara.com/pl/pl/man-from-60-l5429.html?v1=2111003', 1),
+VALUES ('od 70%', 'https://www.zara.com/pl/pl/man-from-70-l5430.html?v1=2112329', 1),
 ('zara athleticz', 'https://www.zara.com/pl/pl/zara-athleticz-collection-l4712.html?v1=2110962', 1),
 ('garnitury', 'https://www.zara.com/pl/pl/mezczyzna-garnitury-l808.html?v1=2110780', 1),
 ('koszule', 'https://www.zara.com/pl/pl/mezczyzna-koszule-l737.html?v1=2109801', 1),

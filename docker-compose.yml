@@ -7,7 +7,10 @@ services:
       - 4444:4444
     restart: always
     shm_size: '2gb'
-
+  wait:
+    image: waisbrot/wait
+    links:
+      - selenium
   app:
     build:
       context: .

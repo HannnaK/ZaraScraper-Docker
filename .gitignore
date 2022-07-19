@@ -2,3 +2,4 @@ venv
 .idea/
 app/__pycache__/
 app/database.db
+.env

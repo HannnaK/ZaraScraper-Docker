@@ -7,12 +7,21 @@ services:
       - 4444:4444
     restart: always
     shm_size: '2gb'
-
+  wait:
+    image: waisbrot/wait
+    links:
+      - selenium
+    environment:
+      - TARGETS=selenium:4444
+    depends_on:
+      - selenium
   app:
     build:
       context: .
     volumes:
       - ./app:/app
-    command: sh -c "python3 clothes_man.py"
+    command: sh -c "python3 zara_main.py"
     depends_on:
-      - selenium
+      - wait
+    env_file:
+      - .env

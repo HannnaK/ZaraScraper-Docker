@@ -6,4 +6,4 @@ RUN pip install -r /requirements.txt
 RUN mkdir /app
 COPY app /app
 WORKDIR /app
-CMD ["python", "clothes_man.py"]
+CMD ["python", "zara_main.py"]

@@ -1,5 +1,5 @@
-import sqlite3
 import time
+import os
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from bs4 import BeautifulSoup
@@ -11,7 +11,8 @@ print(datetime.now())
 
 def categories_man_fun():
     driver = webdriver.Remote(
-        "http://selenium:4444/wd/hub", desired_capabilities=DesiredCapabilities.CHROME
+        command_executor=os.environ["PATH_DRIVER"],
+        desired_capabilities=DesiredCapabilities.CHROME,
     )
 
     data_download = """

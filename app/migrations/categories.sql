@@ -7,7 +7,8 @@ CREATE TABLE "categories"
     "is_on_sale" BOOLEAN NOT NULL CHECK ("is_on_sale" IN (0, 1))
 );
 INSERT INTO "categories"
-VALUES ('od 70%', 'https://www.zara.com/pl/pl/man-from-70-l5430.html?v1=2112329', 1),
+VALUES
+('od 70%', 'https://www.zara.com/pl/pl/man-from-70-l5430.html?v1=2112329', 1),
 ('zara athleticz', 'https://www.zara.com/pl/pl/zara-athleticz-collection-l4712.html?v1=2110962', 1),
 ('garnitury', 'https://www.zara.com/pl/pl/mezczyzna-garnitury-l808.html?v1=2110780', 1),
 ('koszule', 'https://www.zara.com/pl/pl/mezczyzna-koszule-l737.html?v1=2109801', 1),
@@ -24,12 +25,12 @@ VALUES ('od 70%', 'https://www.zara.com/pl/pl/man-from-70-l5430.html?v1=2112329'
 ('buty', 'https://www.zara.com/pl/pl/mezczyzna-buty-l769.html?v1=2110821', 1),
 ('torby | plecaki', 'https://www.zara.com/pl/pl/mezczyzna-torby-l563.html?v1=2111832', 1),
 ('akcesoria', 'https://www.zara.com/pl/pl/mezczyzna-akcesoria-l537.html?v1=2110983', 1),
-('perfumy', 'https://www.zara.com/pl/pl/mezczyzna-akcesoria-perfumy-l551.html?v1=2110794', 1),
 
 
 ('nowosci', 'https://www.zara.com/pl/pl/mezczyzna-nowosci-l711.html', 0),
 ('zara athleticz', 'https://www.zara.com/pl/pl/zara-athleticz-collection-l4712.html?v1=2112945', 0),
 ('kolekcja basic', 'https://www.zara.com/pl/pl/mezczyzna-basics-l587.html?v1=2112966', 0),
+('lniane', 'https://www.zara.com/pl/pl/mezczyzna-len-l708.html?v1=2119865', 0),
 ('garnitury', 'https://www.zara.com/pl/pl/mezczyzna-garnitury-l808.html?v1=2113078', 0),
 ('koszule', 'https://www.zara.com/pl/pl/mezczyzna-koszule-l737.html?v1=2113199', 0),
 ('t-shirty', 'https://www.zara.com/pl/pl/mezczyzna-t-shirty-l855.html?v1=2113240', 0),

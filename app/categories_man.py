@@ -1,20 +1,11 @@
-import time
-import os
-from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from bs4 import BeautifulSoup
 from datetime import datetime
-from functions_man import all_hrefs, database_connection, conn
+from functions_man import database_connection, conn
+from functions_categories import create_categories_dict
 
 print(datetime.now())
 
 
 def categories_man_fun():
-    driver = webdriver.Remote(
-        command_executor=os.environ["PATH_DRIVER"],
-        desired_capabilities=DesiredCapabilities.CHROME,
-    )
-
     data_download = """
     SELECT * FROM "categories";
     """
@@ -31,48 +22,7 @@ def categories_man_fun():
     for category in only_categories:
         categories_dict[category] = []
 
-    for category in man_categories:
-        path = category[1]
-        is_on_sale = category[2]
-        print(category[0], category[2])
-        driver.get(path)
-
-        last_height = driver.execute_script("return document.body.scrollHeight")
-
-        while True:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(10)
-            new_height = driver.execute_script("return document.body.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
-
-        zara = driver.page_source
-
-        clothing = BeautifulSoup(zara, features="lxml")
-
-        if is_on_sale == 1:
-            column_number = [
-                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--0th-column",
-                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--1th-column",
-                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--2th-column",
-                "product-grid-product _product product-grid-product--ZOOM1-columns product-grid-product--3th-column",
-            ]
-            hrefs = all_hrefs(column_number, clothing, path)
-
-            for href in hrefs:
-                categories_dict[category[0]].append((href, is_on_sale))
-        else:
-            links = clothing.find_all(
-                "a", class_="product-link product-grid-product__link link"
-            )
-            hrefs = []
-            for link in links:
-                href = link.get("href")
-                hrefs.append(href)
-            hrefs = list(set(hrefs))
-            for href in hrefs:
-                categories_dict[category[0]].append((href, is_on_sale))
+    categories_dict = create_categories_dict(man_categories, categories_dict)
 
     for key, value in categories_dict.items():
         category = key

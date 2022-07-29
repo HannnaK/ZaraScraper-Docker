@@ -1,15 +1,17 @@
-import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
-from openpyxl import Workbook
-from fake_useragent import UserAgent
+
 from functions_man import (
+    database_connection,
+    conn,
+)
+from functions_clothes import (
     find_index,
     find_old_price,
     find_price,
     find_color,
-    database_connection,
-    conn,
+    list_of_clothes,
+    list_of_all_data,
+    save_clothes_dict_to_exel,
 )
 
 
@@ -80,95 +82,11 @@ def clothes_man_fun():
     data = datetime.now().strftime("%Y-%m-%d")
     print(datetime.now())
 
-    list_with_all_data = []
-    for category, clothes_list in clothes_dict.items():
-        for path in clothes_list:
-            try:
-                ua = UserAgent()
-                headers = {"User-Agent": str(ua.chrome)}
-                clothes_requests = requests.get(path[0], headers=headers)
-
-                clothesBS = BeautifulSoup(clothes_requests.content, features="lxml")
-
-                list_with_all_data.append(
-                    Clothes(path[0], path[1], category, clothesBS)
-                )
-
-            except (AttributeError, TypeError):
-                print("this link no longer exists or it is an ad: ", path[0])
+    list_with_all_data = list_of_all_data(clothes_dict, Clothes)
 
     print("ilość linków:", len(list_with_all_data))
 
-    clothes_list = []
-    for key, value in clothes_dict.items():
-
-        for clothes in list_with_all_data:
-            if clothes.category == key:
-                if len(clothes.colors) == 0:
-                    if len(clothes.sizes) == 0:
-                        clothes_list.append(
-                            [
-                                clothes.category,
-                                clothes.index,
-                                clothes.link,
-                                clothes.is_on_sale,
-                                clothes.name,
-                                clothes.price,
-                                clothes.old_price,
-                                clothes.description,
-                                None,
-                                None,
-                            ]
-                        )
-                    else:
-                        for size in clothes.sizes:
-                            clothes_list.append(
-                                [
-                                    clothes.category,
-                                    clothes.index,
-                                    clothes.link,
-                                    clothes.is_on_sale,
-                                    clothes.name,
-                                    clothes.price,
-                                    clothes.old_price,
-                                    clothes.description,
-                                    None,
-                                    size,
-                                ]
-                            )
-                else:
-                    for color in clothes.colors:
-                        if len(clothes.sizes) == 0:
-                            clothes_list.append(
-                                [
-                                    clothes.category,
-                                    clothes.index,
-                                    clothes.link,
-                                    clothes.is_on_sale,
-                                    clothes.name,
-                                    clothes.price,
-                                    clothes.old_price,
-                                    clothes.description,
-                                    color,
-                                    None,
-                                ]
-                            )
-
-                        for size in clothes.sizes:
-                            clothes_list.append(
-                                [
-                                    clothes.category,
-                                    clothes.index,
-                                    clothes.link,
-                                    clothes.is_on_sale,
-                                    clothes.name,
-                                    clothes.price,
-                                    clothes.old_price,
-                                    clothes.description,
-                                    color,
-                                    size,
-                                ]
-                            )
+    clothes_list = list_of_clothes(clothes_dict, list_with_all_data)
 
     for cloth in clothes_list:
         add_data = 'INSERT INTO "clothes_details" ("id", "category", "index", "link", "is_on_sale", "name", "price", "old_price", "description", "colors", "sizes") VALUES (Null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -203,41 +121,6 @@ def clothes_man_fun():
 
     conn.close()
 
-    file_name = "men" + data + ".xlsx"
-    wb = Workbook()
+    save_clothes_dict_to_exel(data, clothes_dict, data_to_exel)
 
-    for category, _ in clothes_dict.items():
-        key = category
-        wb.create_sheet(key)
-        wb[key].append(
-            [
-                "index",
-                "link",
-                "wyprzedaz",
-                "nazwa",
-                "aktualna cena",
-                "poprzednia cena",
-                "opis",
-                "kolor",
-                "rozmiar",
-            ]
-        )
-
-    for clothes_exel in data_to_exel:
-        wb[clothes_exel[1]].append(
-            [
-                clothes_exel[2],
-                clothes_exel[3],
-                clothes_exel[4],
-                clothes_exel[5],
-                clothes_exel[6],
-                clothes_exel[7],
-                clothes_exel[8],
-                clothes_exel[9],
-                clothes_exel[10],
-            ]
-        )
-
-    wb.remove(wb["Sheet"])
-    wb.save(file_name)
     print(datetime.now())
